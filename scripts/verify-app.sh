@@ -40,6 +40,12 @@ ls "${RESOURCES}/assets/"*.js >/dev/null 2>&1 || fail "the built JavaScript bund
 ls "${RESOURCES}/icons/"*.png >/dev/null 2>&1 || fail "the icons are missing from Resources/icons"
 pass "app bundle assets and icons are inside the extension"
 
+WEB="${APP}/Contents/Resources/web"
+[ -f "${WEB}/index.html" ] || fail "index.html is missing from the app's Resources/web folder, so the app window would be empty"
+ls "${WEB}/assets/"*.js >/dev/null 2>&1 || fail "the built JavaScript bundle is missing from the app's Resources/web/assets"
+ls "${WEB}/assets/"*.css >/dev/null 2>&1 || fail "the built stylesheet is missing from the app's Resources/web/assets"
+pass "the web app is packaged inside the Mac app"
+
 plutil -lint "${APP}/Contents/Info.plist" >/dev/null || fail "the app's Info.plist is not valid"
 plutil -lint "${APPEX}/Contents/Info.plist" >/dev/null || fail "the extension's Info.plist is not valid"
 pass "both Info.plist files are valid"

@@ -94,6 +94,20 @@ jobs:
       - name: Verify the built app
         run: scripts/verify-app.sh "build/DerivedData/Build/Products/Release/Safari Arcade.app" "${VERSION}"
 
+      - name: Launch the app and test it
+        # Starts the real app twice on this Mac and checks that the arcade
+        # loads and that saved data survives quitting. See scripts/self-test.sh.
+        timeout-minutes: 5
+        run: scripts/self-test.sh "build/DerivedData/Build/Products/Release/Safari Arcade.app" build/self-test
+
+      - name: Upload the self-test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-test-build-${{ github.run_number }}
+          path: build/self-test
+          if-no-files-found: warn
+
       - name: Package the DMG
         run: scripts/make-dmg.sh "build/DerivedData/Build/Products/Release/Safari Arcade.app" "build/Safari-Arcade-${VERSION}.dmg"
 

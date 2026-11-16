@@ -1,8 +1,8 @@
 import { SystemCheck } from "./pages/SystemCheck";
 
 /**
- * Milestone 1 shell. It proves the extension can open its interface and
- * that saved data survives. The home screen with the six game cards
+ * Milestone 1 shell. It proves the app can show its interface and that
+ * saved data survives. The home screen with the six game cards
  * replaces the system check in Milestone 2.
  */
 export function App() {

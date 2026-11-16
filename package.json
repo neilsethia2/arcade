@@ -1,7 +1,7 @@
 {
   "name": "safari-arcade",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A personal gaming hub for Safari on macOS, packaged as a Safari Web Extension.",
   "type": "module",
   "scripts": {

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { runDiagnostics } from "./services/diagnostics";
 import { listenForFocusRequests } from "./services/extension";
 import "./styles/tokens.css";
 import "./styles/global.css";
@@ -11,6 +12,9 @@ if (!container) {
 }
 
 listenForFocusRequests();
+
+// Starts the save test straight away, independently of what is on screen.
+void runDiagnostics();
 
 createRoot(container).render(
   <StrictMode>

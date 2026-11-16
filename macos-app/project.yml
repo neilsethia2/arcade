@@ -23,7 +23,7 @@ settings:
     SWIFT_VERSION: "5.0"
     # Both numbers are overridden by the GitHub Actions build, which takes the
     # version from package.json and the build number from the run number.
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # "-" means ad-hoc signing ("Sign to Run Locally"). No Apple Developer
     # account or certificate is needed. See docs/SIGNING.md for what that
@@ -32,12 +32,15 @@ settings:
     CODE_SIGN_IDENTITY: "-"
     DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: YES
-    # The "Copy web extension files" script reads ../dist, which lies outside
+    # The two "Copy web ... files" scripts read ../dist, which lies outside
     # the files Xcode knows about, so script sandboxing has to be off.
     ENABLE_USER_SCRIPT_SANDBOXING: NO
 
 targets:
-  # The container app. Safari extensions on macOS must live inside an app.
+  # The Mac app. It shows the arcade in its own window, using the web files
+  # copied into Contents/Resources/web by the script below. It also carries
+  # the optional Safari extension, because Safari extensions on macOS must
+  # live inside an app.
   Safari Arcade:
     type: application
     platform: macOS
@@ -48,10 +51,27 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.neilsethia2.SafariArcade
         INFOPLIST_FILE: App/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-        CODE_SIGN_ENTITLEMENTS: App/SafariArcade.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - target: Safari Arcade Extension
+    postBuildScripts:
+      - name: Copy web app files
+        basedOnDependencyAnalysis: false
+        script: |
+          set -eu
+          WEB_DIST="${SRCROOT}/../dist"
+          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/web"
+
+          if [ ! -f "${WEB_DIST}/index.html" ]; then
+            echo "error: index.html is missing from ${WEB_DIST}. Run 'npm ci && npm run build' in the repository root before building in Xcode." >&2
+            exit 1
+          fi
+
+          # Start from an empty folder so files from an older build never ship.
+          rm -rf "${DEST}"
+          mkdir -p "${DEST}"
+          rsync -a --exclude ".DS_Store" "${WEB_DIST}/" "${DEST}/"
+          echo "Copied web app files into ${DEST}"
 
   # The Safari Web Extension. Its bundle identifier must start with the
   # container app's identifier.

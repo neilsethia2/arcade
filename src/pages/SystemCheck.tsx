@@ -1,31 +1,54 @@
 import type { ReactNode } from "react";
 import { StatusRow, type Tone } from "../components/StatusRow";
-import { useLaunchCount } from "../hooks/useLaunchCount";
-import { isRunningInExtension } from "../services/extension";
+import { useDiagnostics } from "../hooks/useDiagnostics";
+import { getEnvironment, type Environment } from "../services/diagnostics";
 import { getStore, type StorageBackend } from "../services/storage";
 
+const ENVIRONMENT_LABEL: Record<Environment, string> = {
+  native: "Mac app",
+  extension: "Safari extension",
+  browser: "Browser preview",
+};
+
 const BACKEND_LABEL: Record<StorageBackend, string> = {
+  native: "A file on this Mac",
   extension: "Extension storage",
   localStorage: "Browser localStorage",
   memory: "Memory only",
 };
 
+/** Only the Mac app's file has been shown to survive a restart on a real Mac. */
+const BACKEND_TONE: Record<StorageBackend, Tone> = {
+  native: "good",
+  extension: "warn",
+  localStorage: "neutral",
+  memory: "warn",
+};
+
+const HINT: Record<Environment, string> = {
+  native:
+    "Quit Safari Arcade and open it again. If the count above keeps going up, saved data is surviving restarts.",
+  extension:
+    "Safari forgets an unsigned extension's saved data when it quits, so this count starts again each time. Open the Safari Arcade app to keep scores.",
+  browser: "This is a development preview. Saved data stays in this browser only.",
+};
+
 export function SystemCheck() {
-  const inExtension = isRunningInExtension();
+  const environment = getEnvironment();
   const backend = getStore().backend;
-  const launches = useLaunchCount();
+  const report = useDiagnostics();
 
   let saveTone: Tone;
   let saveValue: ReactNode;
-  if (launches.status === "loading") {
+  if (!report) {
     saveTone = "neutral";
     saveValue = "Checking…";
-  } else if (launches.status === "error") {
+  } else if (report.error !== null || report.launchCount === null) {
     saveTone = "bad";
-    saveValue = `Failed: ${launches.message}`;
+    saveValue = `Failed: ${report.error ?? "nothing was read back"}`;
   } else {
-    saveTone = backend === "memory" ? "warn" : "good";
-    saveValue = `Opened ${launches.count} ${launches.count === 1 ? "time" : "times"}`;
+    saveTone = BACKEND_TONE[backend];
+    saveValue = `Opened ${report.launchCount} ${report.launchCount === 1 ? "time" : "times"}`;
   }
 
   return (
@@ -39,20 +62,13 @@ export function SystemCheck() {
       <dl className="status-list">
         <StatusRow
           label="Running in"
-          tone={inExtension ? "good" : "neutral"}
-          value={inExtension ? "Safari extension" : "Browser preview"}
+          tone={environment === "native" ? "good" : "neutral"}
+          value={ENVIRONMENT_LABEL[environment]}
         />
-        <StatusRow
-          label="Saving to"
-          tone={backend === "memory" ? "warn" : "good"}
-          value={BACKEND_LABEL[backend]}
-        />
+        <StatusRow label="Saving to" tone={BACKEND_TONE[backend]} value={BACKEND_LABEL[backend]} />
         <StatusRow label="Save test" tone={saveTone} value={saveValue} />
       </dl>
-      <p className="card__hint">
-        Quit Safari, open it again and click the toolbar icon. If the count above keeps going up,
-        saved data is surviving restarts.
-      </p>
+      <p className="card__hint">{HINT[environment]}</p>
     </section>
   );
 }

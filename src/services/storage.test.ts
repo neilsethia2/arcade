@@ -1,12 +1,41 @@
 import { describe, expect, it } from "vitest";
 import type { StorageArea } from "../types/webextension";
+import type { NativeStorageBridge, NativeStorageRequest } from "./native";
 import {
   createExtensionStore,
   createLocalStorageStore,
   createMemoryStore,
+  createNativeStore,
   type KeyValueStore,
   type StringStorage,
 } from "./storage";
+
+/** Behaves like the Swift side of the bridge: a dictionary of JSON text. */
+function fakeNativeBridge(): NativeStorageBridge & {
+  data: Map<string, string>;
+  requests: NativeStorageRequest[];
+} {
+  const data = new Map<string, string>();
+  const requests: NativeStorageRequest[] = [];
+  return {
+    data,
+    requests,
+    async postMessage(request) {
+      requests.push(request);
+      switch (request.op) {
+        case "get":
+          // The real bridge replies with nothing when the key is missing.
+          return data.get(request.key);
+        case "set":
+          data.set(request.key, request.value);
+          return true;
+        case "remove":
+          data.delete(request.key);
+          return true;
+      }
+    },
+  };
+}
 
 function fakeExtensionArea(): StorageArea & { data: Record<string, unknown> } {
   const data: Record<string, unknown> = {};
@@ -43,6 +72,7 @@ function fakeLocalStorage(): StringStorage & { data: Map<string, string> } {
 }
 
 const backends: Array<[string, () => KeyValueStore]> = [
+  ["the Mac app", () => createNativeStore(fakeNativeBridge())],
   ["extension storage", () => createExtensionStore(fakeExtensionArea())],
   ["localStorage", () => createLocalStorageStore(fakeLocalStorage())],
   ["memory", () => createMemoryStore()],
@@ -106,6 +136,31 @@ describe("key namespacing", () => {
     const storage = fakeLocalStorage();
     await createLocalStorageStore(storage).set("score", 1);
     expect([...storage.data.keys()]).toEqual(["arcade:score"]);
+  });
+});
+
+describe("Mac app backend", () => {
+  it("prefixes keys and sends values as JSON text", async () => {
+    const bridge = fakeNativeBridge();
+    await createNativeStore(bridge).set("settings", { sound: true });
+    expect(bridge.requests).toEqual([
+      { op: "set", key: "arcade:settings", value: '{"sound":true}' },
+    ]);
+  });
+
+  it("falls back instead of throwing when a saved entry is corrupt", async () => {
+    const bridge = fakeNativeBridge();
+    bridge.data.set("arcade:score", "{not json");
+    expect(await createNativeStore(bridge).get("score", 7)).toBe(7);
+  });
+
+  it("passes a save failure from the app on to the caller", async () => {
+    const bridge: NativeStorageBridge = {
+      postMessage: async () => {
+        throw new Error("The disk is full.");
+      },
+    };
+    await expect(createNativeStore(bridge).set("score", 1)).rejects.toThrow("The disk is full.");
   });
 });
 

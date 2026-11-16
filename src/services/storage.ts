@@ -1,18 +1,22 @@
 import type { StorageArea } from "../types/webextension";
 import { getExtensionApi } from "./extension";
+import { getNativeStorageBridge, type NativeStorageBridge } from "./native";
 
 /**
  * Persistence for the whole arcade: high scores, settings, favourites.
  *
- * Why not just use localStorage? Inside Safari the extension page lives at
- * an address like safari-web-extension://<id>/, and localStorage is tied to
- * that address. The extension's own storage area (browser.storage.local)
- * belongs to the extension itself, so it is the safer home for saved data.
- * localStorage is only the fallback for running the app outside Safari
- * during development.
- *
  * Every game talks to this one interface and never to a storage API
  * directly, so game code stays independent of where the data lives.
+ * There are four places it can live, tried in this order:
+ *
+ * 1. "native": a file kept by the Mac app. This is the real one. It
+ *    survives quitting the app and installing updates.
+ * 2. "extension": the Safari extension's storage area. Testing on a real
+ *    Mac showed that an unsigned extension loses this when Safari quits,
+ *    so it cannot be relied on for scores.
+ * 3. "localStorage": used when previewing in a normal browser tab during
+ *    development.
+ * 4. "memory": last resort, lost when the page closes.
  */
 export interface KeyValueStore {
   /** Which backend is in use, shown on the diagnostics screen. */
@@ -22,9 +26,32 @@ export interface KeyValueStore {
   remove(key: string): Promise<void>;
 }
 
-export type StorageBackend = "extension" | "localStorage" | "memory";
+export type StorageBackend = "native" | "extension" | "localStorage" | "memory";
 
 const PREFIX = "arcade:";
+
+/** Backed by the Mac app, which keeps the values in a file. Values travel as JSON text. */
+export function createNativeStore(bridge: NativeStorageBridge): KeyValueStore {
+  return {
+    backend: "native",
+    async get<T>(key: string, fallback: T): Promise<T> {
+      const raw = await bridge.postMessage({ op: "get", key: PREFIX + key });
+      if (typeof raw !== "string") return fallback;
+      try {
+        return JSON.parse(raw) as T;
+      } catch {
+        // Corrupt entry: behave as if nothing was saved rather than crash a game.
+        return fallback;
+      }
+    },
+    async set<T>(key: string, value: T): Promise<void> {
+      await bridge.postMessage({ op: "set", key: PREFIX + key, value: JSON.stringify(value) });
+    },
+    async remove(key: string): Promise<void> {
+      await bridge.postMessage({ op: "remove", key: PREFIX + key });
+    },
+  };
+}
 
 /** Backed by the extension's own storage area. Values are stored as JSON-safe data. */
 export function createExtensionStore(area: StorageArea): KeyValueStore {
@@ -93,6 +120,9 @@ export function createMemoryStore(): KeyValueStore {
 }
 
 function detectStore(): KeyValueStore {
+  const bridge = getNativeStorageBridge();
+  if (bridge) return createNativeStore(bridge);
+
   const area = getExtensionApi()?.storage?.local;
   if (area) return createExtensionStore(area);
 

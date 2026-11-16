@@ -1,14 +1,22 @@
 name: Build macOS app
 
 # Runs on every push to main, on pull requests, and when started by hand
-# from the Actions tab. Pushing a tag like v0.1.0 also publishes the DMG as
-# a GitHub Release.
+# from the Actions tab.
+#
+# To publish a build on the Releases page: Actions tab > "Build macOS app" >
+# "Run workflow", tick "Publish this build on the Releases page", then Run.
+# Pushing a tag like v0.1.0 does the same thing.
 on:
   push:
     branches: [main]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: Publish this build on the Releases page
+        type: boolean
+        default: false
 
 concurrency:
   group: build-${{ github.ref }}
@@ -97,18 +105,25 @@ jobs:
           if-no-files-found: error
 
       - name: Publish a GitHub Release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.release)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          TAG="v${VERSION}"
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "::error::Release ${TAG} already exists. Raise the version in package.json before publishing again."
+            exit 1
+          fi
           # Versions below 1.0.0 are published as pre-releases: they are
           # development builds, not the finished arcade.
           PRERELEASE_FLAG=""
           case "${VERSION}" in
             0.*) PRERELEASE_FLAG="--prerelease" ;;
           esac
-          gh release create "${GITHUB_REF_NAME}" \
+          # If the tag does not exist yet, this creates it on the commit that was built.
+          gh release create "${TAG}" \
             "build/Safari-Arcade-${VERSION}.dmg" \
+            --target "${GITHUB_SHA}" \
             --title "Safari Arcade ${VERSION}" \
             --notes-file docs/RELEASE_NOTES_HEADER.md \
             --generate-notes \

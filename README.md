@@ -95,6 +95,8 @@ The version number lives in one place, `package.json`. The build copies it into 
 
 ## Releasing a version
 
-1. Change `version` in `package.json`.
-2. Commit and push.
-3. Create and push a matching tag, for example `v0.2.0`. The build publishes a GitHub Release with the DMG attached. The build fails on purpose if the tag and `package.json` disagree.
+1. Change `version` in `package.json` and push.
+2. On GitHub open the **Actions** tab, choose **Build macOS app** on the left, and click **Run workflow**.
+3. Tick **Publish this build on the Releases page** and click the green **Run workflow** button.
+
+A few minutes later the DMG appears on the Releases page. The build refuses to publish the same version twice, so raise the version number first. Versions below 1.0.0 are marked as pre-releases.

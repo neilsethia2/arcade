@@ -13,8 +13,10 @@ Updated after every milestone. Three marks are used:
 - [x] React + TypeScript app builds (`npm run check`: type-check, 18 unit tests, production build)
 - [x] Storage service with extension storage, localStorage and in-memory backends (unit tested)
 - [x] Web extension: toolbar click opens the arcade in a tab, a second click refocuses the same tab, a counter saved in extension storage survives reloads. Tested by loading the built extension into Chrome with a Chrome-style copy of the manifest. Chrome and Safari share these APIs, but this is not a Safari test.
-- [~] macOS container app and Safari Web Extension target (Swift sources and XcodeGen spec written; compiled only by GitHub Actions)
-- [~] GitHub Actions workflow: build, verify, package DMG, upload artifact, release on tag
+- [x] macOS container app and Safari Web Extension target compile on GitHub Actions (macOS 26, Xcode 26.6) with no errors or warnings
+- [x] Built app passes `scripts/verify-app.sh` on the build machine: extension embedded, web files inside it, declared as a Safari Web Extension, versions match, universal (Apple silicon and Intel), ad-hoc signature verifies, extension sandboxed
+- [x] GitHub Actions workflow: build, verify, package DMG, upload artifact (first run passed on commit e5a9698)
+- [~] The app and extension have been compiled and inspected, but never launched. Nothing has run on a Mac with a screen yet.
 - [ ] DMG installed on a real Mac
 - [ ] Extension enabled in real Safari and the arcade tab opens from the toolbar
 - [ ] Launch counter keeps increasing after quitting and reopening Safari

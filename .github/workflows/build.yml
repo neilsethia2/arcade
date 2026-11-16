@@ -101,8 +101,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Versions below 1.0.0 are published as pre-releases: they are
+          # development builds, not the finished arcade.
+          PRERELEASE_FLAG=""
+          case "${VERSION}" in
+            0.*) PRERELEASE_FLAG="--prerelease" ;;
+          esac
           gh release create "${GITHUB_REF_NAME}" \
             "build/Safari-Arcade-${VERSION}.dmg" \
             --title "Safari Arcade ${VERSION}" \
             --notes-file docs/RELEASE_NOTES_HEADER.md \
-            --generate-notes
+            --generate-notes \
+            ${PRERELEASE_FLAG}

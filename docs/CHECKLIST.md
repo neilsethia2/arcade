@@ -16,6 +16,7 @@ Updated after every milestone. Three marks are used:
 - [x] macOS container app and Safari Web Extension target compile on GitHub Actions (macOS 26, Xcode 26.6) with no errors or warnings
 - [x] Built app passes `scripts/verify-app.sh` on the build machine: extension embedded, web files inside it, declared as a Safari Web Extension, versions match, universal (Apple silicon and Intel), ad-hoc signature verifies, extension sandboxed
 - [x] GitHub Actions workflow: build, verify, package DMG, upload artifact (first run passed on commit e5a9698)
+- [x] Release `v0.1.0` published as a pre-release with `Safari-Arcade-0.1.0.dmg` attached (run 4, started from the Actions tab with the publish option)
 - [~] The app and extension have been compiled and inspected, but never launched. Nothing has run on a Mac with a screen yet.
 - [ ] DMG installed on a real Mac
 - [ ] Extension enabled in real Safari and the arcade tab opens from the toolbar

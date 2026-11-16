@@ -33,6 +33,7 @@ Version 0.2.0: standalone Mac app
 - [x] Web side of the bridge tested in Chrome with a simulated app: counter went 1 then 2 across reloads, no page errors
 - [x] Swift code compiles on GitHub Actions with no errors or warnings (first run with the new code: run 6)
 - [x] **Launch test on a real Mac (GitHub's macOS 26 build machine):** the built app was started twice. Both times the page loaded with no errors and reported it was running in the Mac app and saving through it. The launch counter was 1 on the first start and 2 on the second, and `storage.json` held the value 2 afterwards. This runs on every build from now on (`scripts/self-test.sh`).
+- [x] Released as pre-release `v0.2.0` (run 7) with the DMG and a picture of the app window from the launch test. The picture shows the system check screen drawn correctly, reading "Mac app", "A file on this Mac" and "Opened 2 times".
 - [ ] Installed on Neil's Mac and opened from Applications
 - [ ] Launch counter keeps increasing after quitting and reopening the app on Neil's Mac
 - [ ] Keyboard input reaches the page without clicking first (cannot be checked until a game exists; planned for Milestone 3)

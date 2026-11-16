@@ -60,7 +60,7 @@ jobs:
       - name: Run unit tests
         run: npm test
 
-      - name: Build the web extension
+      - name: Build the web app
         run: npm run build
 
       - name: Show Xcode version
@@ -134,9 +134,13 @@ jobs:
           case "${VERSION}" in
             0.*) PRERELEASE_FLAG="--prerelease" ;;
           esac
+          # Also attach the picture the app took of its own window during the
+          # launch test, so anyone can see what this exact build drew.
+          cp build/self-test/run-2.png "build/Safari-Arcade-${VERSION}-launch-test.png"
           # If the tag does not exist yet, this creates it on the commit that was built.
           gh release create "${TAG}" \
             "build/Safari-Arcade-${VERSION}.dmg" \
+            "build/Safari-Arcade-${VERSION}-launch-test.png" \
             --target "${GITHUB_SHA}" \
             --title "Safari Arcade ${VERSION}" \
             --notes-file docs/RELEASE_NOTES_HEADER.md \

@@ -1,12 +1,12 @@
 # Safari Arcade
 
-A personal gaming hub that lives in the Safari toolbar on macOS. Click the icon and a full tab opens with the arcade. Everything runs offline, with no account and no server.
+A personal gaming hub for the Mac. Open the app and the arcade appears in its own window. Everything runs offline, with no account and no server.
 
 The project is being built in milestones. See [docs/CHECKLIST.md](docs/CHECKLIST.md) for what is done, what has been tested and what comes next.
 
 ## Current status
 
-Milestone 1 (project structure, Safari extension, macOS app wrapper, automated build) is in place. The arcade currently opens a system check screen that confirms the extension works and that saved data persists. The dashboard and the six games arrive in the following milestones:
+Milestone 1 (project structure, Mac app, saved data, automated build) is in place. The arcade currently opens a system check screen that confirms the app works and that saved data persists. The dashboard and the six games arrive in the following milestones:
 
 1. Tetris
 2. Snake
@@ -15,15 +15,19 @@ Milestone 1 (project structure, Safari extension, macOS app wrapper, automated b
 5. Survival Race (3D)
 6. Table Tennis Tour (3D)
 
+### Why it is an app and not only a Safari extension
+
+The first version ran only as a Safari extension. Testing it on a real Mac showed two problems with an extension that is not signed with a paid Apple developer certificate: Safari has to be told to allow it again every time Safari is opened, and the saved data was gone after quitting Safari. So the arcade now runs in the Safari Arcade app itself, where neither problem exists. The Safari extension is still included as an optional extra. [docs/SIGNING.md](docs/SIGNING.md) has the details.
+
 ## How it fits together
 
 There are three parts.
 
 **The web app** (`src/`) is the arcade itself, written in React and TypeScript. `npm run build` compiles it into the `dist/` folder.
 
-**The web extension** (`safari-extension/`) is a manifest, a small background script and the icons. They are copied into `dist/` next to the web app, so `dist/` is a complete Safari Web Extension. The background script does one thing: when you click the toolbar icon it opens the arcade in a tab, or brings the existing arcade tab to the front.
+**The Mac app** (`macos-app/`) is a small Swift app. It opens one window, shows the web app inside it using the same engine Safari uses (WebKit), and keeps saved data in a file on your Mac. The web files are packaged inside the app, so nothing is downloaded when you play.
 
-**The macOS app** (`macos-app/`) exists because Safari on macOS only accepts extensions that are delivered inside an app. It is a small Swift app that carries the extension and shows you how to switch it on. The games do not run in this app. They run in Safari.
+**The Safari extension** (`safari-extension/`) is optional. It is a manifest, a small background script and the icons. It adds a toolbar button to Safari that opens the arcade in a tab. It rides along inside the Mac app, because Safari on macOS only accepts extensions delivered inside an app.
 
 ```
 src/                 React + TypeScript app
@@ -31,11 +35,11 @@ src/                 React + TypeScript app
   games/             One folder per game (from Milestone 3)
   hooks/             Reusable React logic
   pages/             Full screens
-  services/          Storage and extension helpers, shared by all games
+  services/          Storage, diagnostics and bridges to the app, shared by all games
   styles/            Design tokens and global styles
 safari-extension/    manifest.json, background.js, icons
-macos-app/           Swift container app, extension target, project.yml
-scripts/             Build helpers (icons, verification, DMG)
+macos-app/           Swift app, extension target, project.yml
+scripts/             Build helpers (icons, verification, launch test, DMG)
 design/              Icon artwork (SVG)
 docs/                Checklist and signing notes
 .github/workflows/   Automated macOS build
@@ -43,35 +47,44 @@ docs/                Checklist and signing notes
 
 ## Getting the app
 
-Every push to `main` is built by GitHub Actions on a macOS machine. The build compiles the web app, generates the Xcode project, builds the app with the extension inside it, checks the result and packages a DMG.
+Download the latest `.dmg` from the [Releases page](https://github.com/neilsethia2/arcade/releases).
 
-To download a build:
-
-1. Open the **Actions** tab of this repository on GitHub.
-2. Click the most recent run with a green tick.
-3. Scroll to **Artifacts** at the bottom and download the file whose name starts with `Safari-Arcade`. You need to be signed in to GitHub. It downloads as a zip with the DMG inside.
-
-Tagged versions also appear on the **Releases** page, where the DMG can be downloaded directly.
+Every push to `main` is also built by GitHub Actions on a Mac. That build compiles the web app, generates the Xcode project, builds the app, checks its contents, launches it twice to test that it loads and that saved data survives a restart, and packages a DMG. Those in-between builds can be downloaded from the **Actions** tab: open the most recent run with a green tick and look under **Artifacts** at the bottom.
 
 ## Installing
 
 1. Open the DMG and drag **Safari Arcade** onto the **Applications** shortcut.
-2. Open **Safari Arcade** from Applications. macOS will block it the first time because the build is not signed with a paid Apple developer certificate. To allow it, open **System Settings**, go to **Privacy & Security**, scroll down and click **Open Anyway** next to the Safari Arcade message. Alternatively run this once in Terminal, then open the app normally:
+2. Open **Safari Arcade** from Applications. macOS will block it the first time because the build is not signed with a paid Apple developer certificate. To allow it, open **System Settings**, go to **Privacy & Security**, scroll down and click **Open Anyway** next to the Safari Arcade message.
 
-   ```
-   xattr -dr com.apple.quarantine "/Applications/Safari Arcade.app"
-   ```
+That is all. From then on it opens like any other app.
 
-3. In Safari choose **Safari > Settings**, open the **Advanced** tab and tick **Show features for web developers**.
-4. Open the **Developer** tab and tick **Allow unsigned extensions**. Safari asks for your Mac password.
-5. Open the **Extensions** tab and tick **Safari Arcade**.
-6. Click the Safari Arcade icon in the Safari toolbar.
+If you prefer Terminal, this one command does the same as the Open Anyway step:
 
-**Step 4 has to be repeated every time you quit and reopen Safari.** That is a Safari rule for unsigned extensions and cannot be worked around from inside the app. [docs/SIGNING.md](docs/SIGNING.md) explains why and what it would take to remove that step.
+```
+xattr -dr com.apple.quarantine "/Applications/Safari Arcade.app"
+```
+
+## Saved data
+
+High scores and settings are kept in one file:
+
+```
+~/Library/Application Support/Safari Arcade/storage.json
+```
+
+It belongs to you, not to the app. Replacing the app with a newer version leaves it alone. Deleting that file resets everything.
 
 ## Updating
 
-Download the newer DMG, drag the app into Applications and choose **Replace**. Saved scores and settings are kept by Safari, separately from the app, so replacing the app should leave them alone. This will be confirmed during Milestone 6 testing.
+Download the newer DMG, drag the app into Applications and choose **Replace**. macOS treats a newly downloaded copy as new, so the **Open Anyway** step is needed once per update.
+
+## The optional Safari extension
+
+The app also contains a Safari extension that adds an arcade button to Safari's toolbar and opens the arcade in a tab. Without a paid Apple developer membership it has two drawbacks, both seen in testing: Safari must be told to allow it again on every launch, and it forgets saved data when Safari quits. To try it anyway:
+
+1. In Safari choose **Safari > Settings**, open the **Advanced** tab and tick **Show features for web developers**.
+2. Open the **Developer** tab and tick **Allow unsigned extensions**.
+3. Open the **Extensions** tab and tick **Safari Arcade**.
 
 ## Working on the code
 
@@ -83,13 +96,17 @@ npm run dev        # preview the arcade in a normal browser tab
 npm run check      # type-check, run the tests and build
 ```
 
-To build the macOS app locally you need Xcode and XcodeGen (`brew install xcodegen`):
+To build the Mac app locally you need Xcode and XcodeGen (`brew install xcodegen`):
 
 ```
 npm run build
 xcodegen generate --spec macos-app/project.yml
 open macos-app/SafariArcade.xcodeproj
 ```
+
+Then press the Run button in Xcode. An app you build yourself this way was not downloaded, so it opens without the Open Anyway step.
+
+After changing anything in `src/`, run `npm run build` again before building in Xcode, because the app packages whatever is in `dist/`.
 
 The version number lives in one place, `package.json`. The build copies it into the extension manifest and the macOS app.
 

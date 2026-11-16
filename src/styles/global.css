@@ -1,0 +1,152 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1100px 520px at 50% -10%, var(--color-bg-glow), transparent 70%),
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- App shell ---------- */
+
+.shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-7) var(--space-5) var(--space-5);
+}
+
+.shell__header {
+  text-align: center;
+  margin-bottom: var(--space-7);
+}
+
+.shell__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.5vw, 44px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, var(--color-text) 30%, var(--color-accent-strong));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shell__tagline {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: 17px;
+}
+
+.shell__main {
+  width: 100%;
+  max-width: 560px;
+  flex: 1;
+}
+
+.shell__footer {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Card ---------- */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+}
+
+.card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.card__lead {
+  margin: var(--space-1) 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.card__hint {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Status list ---------- */
+
+.status-list {
+  margin: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.status-row + .status-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.status-row__label {
+  color: var(--color-text-muted);
+}
+
+.status-row__value {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+  text-align: right;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--color-text-muted);
+}
+
+.status-dot--good {
+  background: var(--color-good);
+}
+
+.status-dot--warn {
+  background: var(--color-warn);
+}
+
+.status-dot--bad {
+  background: var(--color-bad);
+}

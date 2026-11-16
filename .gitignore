@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+
+# The Xcode project is generated from macos-app/project.yml by XcodeGen,
+# so it is never committed. Edit project.yml instead.
+macos-app/*.xcodeproj/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Installers
+*.dmg
+
+# Signing material must never be committed
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.keychain
+*.keychain-db
+AuthKey_*.p8
+.env
+.env.*
+
+# macOS and editors
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,108 @@
+name: Build macOS app
+
+# Runs on every push to main, on pull requests, and when started by hand
+# from the Actions tab. Pushing a tag like v0.1.0 also publishes the DMG as
+# a GitHub Release.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # needed only to attach the DMG to a release
+
+jobs:
+  build:
+    name: Build, verify and package
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Read the version number
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Building Safari Arcade ${VERSION} (build ${GITHUB_RUN_NUMBER})"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v${VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}. The tag must be v${VERSION}."
+            exit 1
+          fi
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build the web extension
+        run: npm run build
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          xcodegen --version
+
+      - name: Generate the Xcode project
+        run: xcodegen generate --spec macos-app/project.yml
+
+      - name: Build the macOS app and Safari extension
+        # -quiet hides the routine build chatter but still prints every
+        # warning and error, and a failed build still fails this step.
+        run: |
+          xcodebuild \
+            -quiet \
+            -project macos-app/SafariArcade.xcodeproj \
+            -scheme "Safari Arcade" \
+            -configuration Release \
+            -destination "generic/platform=macOS" \
+            -derivedDataPath build/DerivedData \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="${VERSION}" \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            build
+
+      - name: Verify the built app
+        run: scripts/verify-app.sh "build/DerivedData/Build/Products/Release/Safari Arcade.app" "${VERSION}"
+
+      - name: Package the DMG
+        run: scripts/make-dmg.sh "build/DerivedData/Build/Products/Release/Safari Arcade.app" "build/Safari-Arcade-${VERSION}.dmg"
+
+      - name: Upload the DMG
+        uses: actions/upload-artifact@v6
+        with:
+          name: Safari-Arcade-${{ env.VERSION }}-build-${{ github.run_number }}
+          path: build/Safari-Arcade-${{ env.VERSION }}.dmg
+          if-no-files-found: error
+
+      - name: Publish a GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "build/Safari-Arcade-${VERSION}.dmg" \
+            --title "Safari Arcade ${VERSION}" \
+            --notes-file docs/RELEASE_NOTES_HEADER.md \
+            --generate-notes

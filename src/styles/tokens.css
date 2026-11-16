@@ -1,0 +1,44 @@
+/*
+ * Design tokens. Every colour, radius and spacing value the app uses is
+ * named here once. Theme selection (Milestone 2) works by swapping these
+ * values, so components never hard-code a colour.
+ */
+:root {
+  color-scheme: dark;
+
+  --color-bg: #121317;
+  --color-bg-glow: #1a1c26;
+  --color-surface: #1c1e25;
+  --color-surface-raised: #252832;
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  --color-text: #f5f6f8;
+  --color-text-muted: #9aa0ad;
+
+  --color-accent: #6d7cff;
+  --color-accent-strong: #8e7bff;
+
+  --color-good: #4ade80;
+  --color-warn: #fbbf24;
+  --color-bad: #f87171;
+
+  --radius-card: 18px;
+  --radius-control: 10px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 40px rgba(0, 0, 0, 0.35);
+}

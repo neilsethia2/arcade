@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Safari Arcade app icon. Original artwork: a D-pad and two buttons on a dark tile. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2e3a"/>
+      <stop offset="1" stop-color="#14151a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d7cff"/>
+      <stop offset="1" stop-color="#a06bff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.3" r="0.6">
+      <stop offset="0" stop-color="#6d7cff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#6d7cff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- macOS icon grid: 824px tile centred on a 1024px canvas -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+  <rect x="101.500" y="101.500" width="821" height="821" rx="183.500" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+  <!-- D-pad -->
+  <g fill="#f5f6f8">
+    <rect x="318" y="418" width="96" height="290" rx="26"/>
+    <rect x="221" y="515" width="290" height="96" rx="26"/>
+  </g>
+  <!-- Buttons -->
+  <circle cx="742" cy="500" r="62" fill="url(#accent)"/>
+  <circle cx="622" cy="626" r="62" fill="url(#accent)"/>
+  <!-- Screen bar -->
+  <rect x="221" y="286" width="582" height="40" rx="20" fill="#ffffff" fill-opacity="0.14"/>
+  <rect x="221" y="286" width="210" height="40" rx="20" fill="url(#accent)"/>
+</svg>
